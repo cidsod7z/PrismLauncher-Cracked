@@ -36,6 +36,7 @@
  */
 
 #include "ServersPage.h"
+#include "Application.h"
 #include "ServerPingTask.h"
 #include "ui/dialogs/CustomMessageBox.h"
 #include "ui_ServersPage.h"
@@ -255,11 +256,7 @@ class ServersModel : public QAbstractListModel {
             return false;
         }
         beginMoveRows(QModelIndex(), row, row, QModelIndex(), row - 1);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
         m_servers.swapItemsAt(row - 1, row);
-#else
-        m_servers.swap(row - 1, row);
-#endif
         endMoveRows();
         scheduleSave();
         return true;
@@ -275,11 +272,7 @@ class ServersModel : public QAbstractListModel {
             return false;
         }
         beginMoveRows(QModelIndex(), row, row, QModelIndex(), row + 2);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
         m_servers.swapItemsAt(row + 1, row);
-#else
-        m_servers.swap(row + 1, row);
-#endif
         endMoveRows();
         scheduleSave();
         return true;
@@ -327,7 +320,7 @@ class ServersModel : public QAbstractListModel {
                             if (px.loadFromData(bytes))
                                 return QIcon(px);
                         }
-                        return APPLICATION->getThemedIcon("unknown_server");
+                        return QIcon::fromTheme("unknown_server");
                     }
                     case 1:
                         return m_servers[row].m_address;
@@ -586,7 +579,7 @@ ServersPage::ServersPage(InstancePtr inst, QWidget* parent) : QMainWindow(parent
     connect(m_inst.get(), &MinecraftInstance::runningStatusChanged, this, &ServersPage::runningStateChanged);
     connect(ui->nameLine, &QLineEdit::textEdited, this, &ServersPage::nameEdited);
     connect(ui->addressLine, &QLineEdit::textEdited, this, &ServersPage::addressEdited);
-    connect(ui->resourceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(resourceIndexChanged(int)));
+    connect(ui->resourceComboBox, &QComboBox::currentIndexChanged, this, &ServersPage::resourceIndexChanged);
     connect(m_model, &QAbstractItemModel::rowsRemoved, this, &ServersPage::rowsRemoved);
 
     m_locked = m_inst->isRunning();
@@ -711,12 +704,9 @@ void ServersPage::openedImpl()
     m_model->observe();
 
     auto const setting_name = QString("WideBarVisibility_%1").arg(id());
-    if (!APPLICATION->settings()->contains(setting_name))
-        m_wide_bar_setting = APPLICATION->settings()->registerSetting(setting_name);
-    else
-        m_wide_bar_setting = APPLICATION->settings()->getSetting(setting_name);
+    m_wide_bar_setting = APPLICATION->settings()->getOrRegisterSetting(setting_name);
 
-    ui->toolBar->setVisibilityState(m_wide_bar_setting->get().toByteArray());
+    ui->toolBar->setVisibilityState(QByteArray::fromBase64(m_wide_bar_setting->get().toString().toUtf8()));
 
     // ping servers
     m_model->queryServersStatus();
@@ -726,7 +716,7 @@ void ServersPage::closedImpl()
 {
     m_model->unobserve();
 
-    m_wide_bar_setting->set(ui->toolBar->getVisibilityState());
+    m_wide_bar_setting->set(QString::fromUtf8(ui->toolBar->getVisibilityState().toBase64()));
 }
 
 void ServersPage::on_actionAdd_triggered()

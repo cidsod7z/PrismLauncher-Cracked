@@ -138,6 +138,15 @@ auto Mod::name() const -> QString
     return Resource::name();
 }
 
+auto Mod::mod_id() const -> QString
+{
+    auto d_mod_id = details().mod_id;
+    if (!d_mod_id.isEmpty())
+        return d_mod_id;
+
+    return Resource::name();
+}
+
 auto Mod::version() const -> QString
 {
     return details().version;
@@ -170,9 +179,9 @@ auto Mod::loaders() const -> QString
 auto Mod::side() const -> QString
 {
     if (metadata())
-        return Metadata::modSideToString(metadata()->side);
+        return ModPlatform::SideUtils::toString(metadata()->side);
 
-    return Metadata::modSideToString(Metadata::ModSide::UniversalSide);
+    return ModPlatform::SideUtils::toString(ModPlatform::Side::UniversalSide);
 }
 
 auto Mod::mcVersions() const -> QString

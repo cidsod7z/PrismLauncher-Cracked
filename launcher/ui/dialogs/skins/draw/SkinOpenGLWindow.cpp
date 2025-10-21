@@ -76,8 +76,8 @@ void SkinOpenGLWindow::mousePressEvent(QMouseEvent* e)
 void SkinOpenGLWindow::mouseMoveEvent(QMouseEvent* event)
 {
     if (m_isMousePressed) {
-        int dx = event->x() - m_mousePosition.x();
-        int dy = event->y() - m_mousePosition.y();
+        int dx = event->position().x() - m_mousePosition.x();
+        int dy = event->position().y() - m_mousePosition.y();
 
         m_yaw += dx * 0.5f;
         m_pitch += dy * 0.5f;
@@ -262,4 +262,9 @@ void SkinOpenGLWindow::wheelEvent(QWheelEvent* event)
     m_distance -= delta * 0.01f;          // Adjust sensitivity factor
     m_distance = qMax(16.f, m_distance);  // Clamp distance
     update();                             // Trigger a repaint
+}
+void SkinOpenGLWindow::setElytraVisible(bool visible)
+{
+    if (m_scene)
+        m_scene->setElytraVisible(visible);
 }
